@@ -101,5 +101,115 @@ class ClassLoader
         $this->vendorDir = $vendorDir;
     }
 
+    /**
+     * @return string[]
+     */
+    public function getPrefixes()
+    {
+        if (!empty($this->prefixesPsr0)) {
+            return call_user_func_array('array_merge', array_values($this->prefixesPsr0));
+        }
+
+        return array();
+    }
+
+    /**
+     * @return array[]
+     * @psalm-return array<string, array<int, string>>
+     */
+    public function getPrefixesPsr4()
+    {
+        return $this->prefixDirsPsr4;
+    }
+
+    /**
+     * @return array[]
+     * @psalm-return array<string, string>
+     */
+    public function getFallbackDirs()
+    {
+        return $this->fallbackDirsPsr0;
+    }
+
+    /**
+     * @return array[]
+     * @psalm-return array<string, string>
+     */
+    public function getFallbackDirsPsr4()
+    {
+        return $this->fallbackDirsPsr4;
+    }
+
+    /**
+     * @return string[] Array of classname => path
+     * @psalm-return array<string, string>
+     */
+    public function getClassMap()
+    {
+        return $this->classMap;
+    }
+
+    /**
+     * @param string[] $classMap Class to filename map
+     * @psalm-param array<string, string> $classMap
+     *
+     * @return void
+     */
+    public function addClassMap(array $classMap)
+    {
+        if ($this->classMap) {
+            $this->classMap = array_merge($this->classMap, $classMap);
+        } else {
+            $this->classMap = $classMap;
+        }
+    }
+
+    /**
+     * Registers a set of PSR-0 directories for a given prefix, either
+     * appending or prepending to the ones previously set for this prefix.
+     *
+     * @param string          $prefix  The prefix
+     * @param string[]|string $paths   The PSR-0 root directories
+     * @param bool            $prepend Whether to prepend the directories
+     *
+     * @return void
+     */
+    public function add($prefix, $paths, $prepend = false)
+    {
+        if (!$prefix) {
+            if ($prepend) {
+                $this->fallbackDirsPsr0 = array_merge(
+                    (array) $paths,
+                    $this->fallbackDirsPsr0
+                );
+            } else {
+                $this->fallbackDirsPsr0 = array_merge(
+                    $this->fallbackDirsPsr0,
+                    (array) $paths
+                );
+            }
+
+            return;
+        }
+
+        $first = $prefix[0];
+        if (!isset($this->prefixesPsr0[$first][$prefix])) {
+            $this->prefixesPsr0[$first][$prefix] = (array) $paths;
+
+            return;
+        }
+        if ($prepend) {
+            $this->prefixesPsr0[$first][$prefix] = array_merge(
+                (array) $paths,
+                $this->prefixesPsr0[$first][$prefix]
+            );
+        } else {
+            $this->prefixesPsr0[$first][$prefix] = array_merge(
+                $this->prefixesPsr0[$first][$prefix],
+                (array) $paths
+            );
+        }
+    }
+
     
 }
